@@ -8,10 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.kafka.core.KafkaTemplate;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class KafkaPublisherServiceTest {
 
@@ -29,5 +27,16 @@ public class KafkaPublisherServiceTest {
         ScoreUpdate update = new ScoreUpdate("event-123", "2:1");
         kafkaPublisherService.publishScore(update);
         verify(kafkaTemplate, times(1)).send(anyString(), eq("event-123"), eq(update));
+    }
+
+    @Test
+    void testPublishScoreThrowsException() {
+        ScoreUpdate update = new ScoreUpdate("event-error", "0:0");
+
+        when(kafkaTemplate.send(anyString(), anyString(), any()))
+                .thenThrow(new RuntimeException("Kafka broker unavailable"));
+
+        kafkaPublisherService.publishScore(update);
+        verify(kafkaTemplate, times(1)).send(anyString(), eq("event-error"), eq(update));
     }
 }
